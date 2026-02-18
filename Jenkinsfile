@@ -10,7 +10,7 @@ pipeline {
         stage('Clone Repo') {
             steps {
                 echo "Cloning open-source repo..."
-                git branch: 'main', url: 'https://github.com/darenaranja-lab/node-js-sample.git'
+                git branch: 'master', url: 'git@github.com:darenaranja-lab/node-js-sample.git'
                 sh 'ls -l'
             }
         }
