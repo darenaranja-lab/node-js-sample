@@ -22,7 +22,7 @@ pipeline {
                 sh 'docker rm -f node-app-container || true'
 
                 echo "Running new container..."
-                sh 'docker run -d -p 5006:5006 --name node-app-container node-app'
+                sh 'docker run -d -p 5006:3000 --name node-app-container node-app'
             }
         }
     }
