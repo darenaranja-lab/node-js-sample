@@ -5,7 +5,7 @@ pipeline {
         stage('Checkout') {
             steps {
                 echo "Cloning forked repo..."
-                git url: 'https://github.com/<your-username>/node-js-sample.git', branch: 'main'
+                git url: 'https://github.com/darenaranja-lab/node-js-sample.git', branch: 'master'
             }
         }
 
