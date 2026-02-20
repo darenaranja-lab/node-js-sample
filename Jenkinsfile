@@ -1,5 +1,6 @@
 pipeline {
     agent any
+
     environment {
         APP_NAME = "node-app"
         HOST_PORT = "5006"
@@ -7,11 +8,12 @@ pipeline {
     }
 
     stages {
+
         stage('Clone Repo') {
             steps {
-                echo "Cloning open-source repo..."
-                git branch: 'master', url: 'git@github.com:darenaranja-lab/node-js-sample.git'
-                sh 'ls -l'
+                echo "Cloning forked repository..."
+                git branch: 'master',
+                    url: 'git@github.com:darenaranja-lab/node-js-sample.git'
             }
         }
 
@@ -19,28 +21,42 @@ pipeline {
             steps {
                 echo "Building Docker image..."
                 sh """
-                    docker build -t $APP_NAME .
-                    docker images | grep $APP_NAME
+                    docker build -t ${APP_NAME}:latest .
+                    docker images | grep ${APP_NAME}
                 """
             }
         }
 
-        stage('Stop Old Container') {
+        stage('Cleanup Old Container') {
             steps {
-                echo "Stopping old container if it exists..."
+                echo "Removing old container and image if they exist..."
                 sh """
-                    docker rm -f $APP_NAME-container || true
-                    docker ps -a
+                    docker rm -f ${APP_NAME}-container || true
                 """
             }
         }
 
-        stage('Deploy Node App') {
+        stage('Deploy Node App (Internal Only)') {
             steps {
-                echo "Running new Docker container for Node app..."
+                echo "Starting new container bound to localhost only..."
                 sh """
-                    docker run -d -e PORT=$CONTAINER_PORT -p $HOST_PORT:$CONTAINER_PORT --name $APP_NAME-container $APP_NAME
-                    docker ps | grep $APP_NAME-container
+                    docker run -d \
+                      -e PORT=${CONTAINER_PORT} \
+                      -p 127.0.0.1:${HOST_PORT}:${CONTAINER_PORT} \
+                      --name ${APP_NAME}-container \
+                      ${APP_NAME}:latest
+
+                    docker ps | grep ${APP_NAME}-container
+                """
+            }
+        }
+
+        stage('Health Check') {
+            steps {
+                echo "Verifying application is responding internally..."
+                sh """
+                    sleep 5
+                    curl -f http://127.0.0.1:${HOST_PORT} || exit 1
                 """
             }
         }
@@ -48,11 +64,10 @@ pipeline {
 
     post {
         success {
-            echo "Pipeline finished successfully. Node app should be accessible via http://<VM-IP>:$HOST_PORT"
+            echo "Pipeline completed successfully."
         }
         failure {
-            echo "Pipeline failed. Check the console logs for errors."
+            echo "Pipeline failed. Check logs."
         }
     }
 }
-
